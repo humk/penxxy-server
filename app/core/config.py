@@ -1,6 +1,19 @@
 from typing import List, Optional, Union, Dict, Any
+import os
 from pydantic import AnyHttpUrl, EmailStr, field_validator
 from pydantic_settings import BaseSettings
+from dotenv import load_dotenv
+
+# 获取项目根目录
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# 优先尝试加载.env文件
+env_path = os.path.join(BASE_DIR, ".env")
+if os.path.exists(env_path):
+    print(f"加载环境变量文件: {env_path}")
+    load_dotenv(env_path)
+else:
+    print(f"环境变量文件不存在: {env_path}")
 
 
 class Settings(BaseSettings):
@@ -57,9 +70,26 @@ class Settings(BaseSettings):
     
     model_config = {
         "case_sensitive": True,
-        "env_file": ".env",
+        "env_file": env_path,  # 使用绝对路径
+        "env_file_encoding": "utf-8",
         "extra": "ignore",  # 允许额外的字段
     }
+    
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # 打印调试信息，帮助排查环境变量问题
+        if self.APP_ENV == "development":
+            print(f"应用配置: APP_ENV={self.APP_ENV}, DEBUG={self.DEBUG}")
+            print(f"数据库: {self.DATABASE_URL}")
+            print(f"微信小程序: APPID={self.WECHAT_MINI_APPID}")
+            print(f"环境变量文件: {env_path}")
 
 
-settings = Settings() 
+# 创建设置实例
+settings = Settings()
+
+# 打印当前环境变量，帮助调试
+if os.environ.get("APP_ENV") == "development" or settings.DEBUG:
+    print("系统环境变量:")
+    for key in ["APP_ENV", "DEBUG", "SECRET_KEY", "DATABASE_URL", "WECHAT_MINI_APPID"]:
+        print(f"{key}={os.environ.get(key, '未设置')}") 

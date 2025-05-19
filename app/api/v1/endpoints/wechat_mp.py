@@ -29,9 +29,9 @@ async def verify_mp_callback(
     hash_str = hashlib.sha1(temp_str.encode("utf-8")).hexdigest()
     print(hash_str, signature)
     if hash_str == signature:
-        return echostr
+        return True
     
-    return "验证失败"
+    return False
 
 
 @router.post("/send_custom_message", response_model=Dict[str, Any])
