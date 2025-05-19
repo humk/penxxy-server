@@ -25,8 +25,9 @@ async def verify_mp_callback(
     token = settings.WECHAT_MP_TOKEN
     temp_list = sorted([token, timestamp, nonce])
     temp_str = "".join(temp_list)
+    print(token, temp_list, temp_str)
     hash_str = hashlib.sha1(temp_str.encode("utf-8")).hexdigest()
-    
+    print(hash_str, signature)
     if hash_str == signature:
         return echostr
     
