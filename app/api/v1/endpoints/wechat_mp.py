@@ -26,10 +26,54 @@ async def verify_mp_callback(
     temp_list = sorted([token, timestamp, nonce])
     temp_str = "".join(temp_list)
     hash_str = hashlib.sha1(temp_str.encode("utf-8")).hexdigest()
+    
     if hash_str == signature:
         return echostr
     
     return "验证失败"
+
+
+@router.post("/callback", response_class=PlainTextResponse)
+async def handle_mp_message(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+) -> Any:
+    """
+    处理微信公众号消息并自动回复
+    """
+    wechat_service = WechatMPService(
+        appid=settings.WECHAT_MP_APPID,
+        secret=settings.WECHAT_MP_SECRET,
+        token=settings.WECHAT_MP_TOKEN,
+        aes_key=settings.WECHAT_MP_AES_KEY,
+    )
+    
+    try:
+        # 获取请求体
+        body = await request.body()
+        
+        # 获取URL参数
+        params = request.query_params
+        signature = params.get("signature", "")
+        timestamp = params.get("timestamp", "")
+        nonce = params.get("nonce", "")
+        
+        # 验证签名
+        token = settings.WECHAT_MP_TOKEN
+        temp_list = sorted([token, timestamp, nonce])
+        temp_str = "".join(temp_list)
+        hash_str = hashlib.sha1(temp_str.encode("utf-8")).hexdigest()
+        
+        if hash_str != signature:
+            return "签名验证失败"
+        
+        # 解析消息并自动回复
+        reply = await wechat_service.auto_reply(body)
+        return reply
+    
+    except Exception as e:
+        # 出现异常，返回空字符串，避免微信服务器重试
+        return ""
 
 
 @router.post("/send_custom_message", response_model=Dict[str, Any])

@@ -28,10 +28,10 @@ class Settings(BaseSettings):
     PROJECT_VERSION: str = "0.1.0"
     
     # 调试模式
-    DEBUG: bool = True
+    DEBUG: bool = False
     
-    # 安全设置 - 为开发环境提供默认值
-    SECRET_KEY: str = "dev_secret_key_please_change_in_production"
+    # 安全设置
+    SECRET_KEY: str
     
     # CORS设置
     BACKEND_CORS_ORIGINS: List[Union[str, AnyHttpUrl]] = []
@@ -44,36 +44,39 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
     
-    # 数据库设置 - 开发环境使用SQLite
-    DATABASE_URL: str = "sqlite:///./dev.db"
+    # 数据库设置
+    DATABASE_URL: str
     
-    # JWT设置 - 为开发环境提供默认值
-    JWT_SECRET_KEY: str = "dev_jwt_secret_key_please_change_in_production"
+    # JWT设置
+    JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # 微信小程序设置 - 开发环境使用测试值
-    WECHAT_MINI_APPID: Optional[str] = "wx_mini_appid"
-    WECHAT_MINI_SECRET: Optional[str] = "wx_mini_secret"
+    # 微信小程序设置
+    WECHAT_MINI_APPID: str
+    WECHAT_MINI_SECRET: str
     
-    # 微信公众号设置 - 开发环境使用测试值
-    WECHAT_MP_APPID: Optional[str] = "wx_mp_appid"
-    WECHAT_MP_SECRET: Optional[str] = "wx_mp_secret"
-    WECHAT_MP_TOKEN: Optional[str] = "wx_mp_token"
+    # 微信公众号设置
+    WECHAT_MP_APPID: str
+    WECHAT_MP_SECRET: str
+    WECHAT_MP_TOKEN: str
     WECHAT_MP_AES_KEY: Optional[str] = None
     
-    # 微信支付设置 - 开发环境使用测试值
-    WECHAT_PAY_MCHID: Optional[str] = "wx_pay_mchid"
-    WECHAT_PAY_KEY: Optional[str] = "wx_pay_key"
+    # 微信支付设置
+    WECHAT_PAY_MCHID: str
+    WECHAT_PAY_KEY: str
     WECHAT_PAY_CERT_PATH: Optional[str] = None
     WECHAT_PAY_KEY_PATH: Optional[str] = None
     
-    model_config = {
-        "case_sensitive": True,
-        "env_file": env_path,  # 使用绝对路径
-        "env_file_encoding": "utf-8",
-        "extra": "ignore",  # 允许额外的字段
-    }
+    # LLM配置
+    OPENAI_API_KEY: str
+    OPENAI_MODEL: str = "gpt-4-turbo"
+    OPENAI_API_BASE: Optional[str] = "https://api.openai.com/v1"
+    OPENAI_HTTP_PROXY: Optional[str] = None
+    
+    class Config:
+        case_sensitive = True
+        env_file = ".env"
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
