@@ -1,12 +1,16 @@
-import logging
-from typing import Dict, Any, List, Optional
-import re
 import json
+import re
+from typing import Dict, Any, List, Optional
+import os
+import traceback
 
-from app.agents.base.base_agent import BaseAgent
+from app.agents.base import BaseAgent
 from app.utils.llm import LLMTool
 from app.utils.arxiv_tool import ArxivTool
+from app.utils.logger import get_logger
 
+# 获取论文QA代理的日志记录器
+logger = get_logger("paper_qa")
 
 class PaperQAAgent(BaseAgent):
     """
@@ -115,7 +119,7 @@ class PaperQAAgent(BaseAgent):
         ]
         
         # 设置系统提示词
-        system_prompt = """你是一个专业的学术问答助手，擅长回答关于学术论文和研究的问题。你可以：
+        system_prompt = """你是一个专业的学术问答助手，名字叫烹小鲜也，擅长回答关于学术论文和研究的问题。你可以：
 1. 搜索并推荐相关论文
 2. 解读特定论文的内容
 3. 总结研究领域的最新进展
@@ -163,7 +167,7 @@ class PaperQAAgent(BaseAgent):
                 )
                 
                 if isinstance(response, dict) and "error" in response and response["error"]:
-                    logging.error(response.get('message', '未知错误'))
+                    logger.error(response.get('message', '未知错误'))
                     return {"answer": f"抱歉，在处理您的请求时遇到了一些问题。"}
                 
                 message = response.choices[0].message
@@ -224,7 +228,7 @@ class PaperQAAgent(BaseAgent):
                                 "content": json.dumps(result, ensure_ascii=False)
                             })
                     except Exception as e:
-                        print(f"处理工具调用时出错: {str(e)}")
+                        logger.error(f"处理工具调用时出错: {str(e)}")
                         # 添加错误响应
                         messages.append({
                             "tool_call_id": tool_call.id,
@@ -250,7 +254,7 @@ class PaperQAAgent(BaseAgent):
                 )
                 
                 if isinstance(final_response, dict) and "error" in final_response and final_response["error"]:
-                    logging.error(final_response.get('message', '未知错误'))
+                    logger.error(final_response.get('message', '未知错误'))
                     return {"answer": "抱歉，在处理您的请求时遇到了一些问题"}
                 
                 final_answer = final_response.choices[0].message.content
@@ -262,7 +266,7 @@ class PaperQAAgent(BaseAgent):
             }
             
         except Exception as e:
-            print(f"处理工具调用过程中出错: {str(e)}")
+            logger.error(f"处理工具调用过程中出错: {str(e)}")
             # 出错时返回一个友好的错误消息
             return {
                 "answer": f"抱歉，在处理您的问题时遇到了技术问题。请尝试重新表述您的问题或稍后再试。",
@@ -273,9 +277,6 @@ class PaperQAAgent(BaseAgent):
 # 添加测试用的主函数
 if __name__ == "__main__":
     import asyncio
-    import os
-    import json
-    import traceback
     from dotenv import load_dotenv
     
     # 加载环境变量
@@ -283,7 +284,7 @@ if __name__ == "__main__":
     
     # 确保OpenAI API密钥已设置
     if not os.environ.get("OPENAI_API_KEY"):
-        print("错误: 未找到OPENAI_API_KEY环境变量。请在.env文件中设置该变量。")
+        logger.error("未找到OPENAI_API_KEY环境变量。请在.env文件中设置该变量。")
         exit(1)
     
     async def test_paper_qa_agent():
@@ -299,9 +300,9 @@ if __name__ == "__main__":
         ]
         
         # 选择查询
-        print("\n可用测试查询:")
+        logger.info("\n可用测试查询:")
         for i, q in enumerate(test_queries):
-            print(f"{i+1}. {q}")
+            logger.info(f"{i+1}. {q}")
         
         choice = input("\n请选择测试查询编号 (1-4)，或输入自定义查询: ")
         
@@ -314,23 +315,23 @@ if __name__ == "__main__":
         except ValueError:
             query = choice
             
-        print(f"\n{'=' * 50}")
-        print(f"测试查询: {query}")
-        print(f"{'=' * 50}")
+        logger.info(f"\n{'=' * 50}")
+        logger.info(f"测试查询: {query}")
+        logger.info(f"{'=' * 50}")
         
         # 处理查询
         try:
-            print("正在处理查询...")
+            logger.info("正在处理查询...")
             result = await agent.process(query)
             
             # 打印回答
-            print(f"\n回答: {result['answer']}")
-            print(f"迭代次数: {result.get('iterations', 'N/A')}")
+            logger.info(f"\n回答: {result['answer']}")
+            logger.info(f"迭代次数: {result.get('iterations', 'N/A')}")
             
             # 询问是否显示详细消息历史
             show_details = input("\n是否显示详细消息历史? (y/n): ").lower() == 'y'
             if show_details and 'raw_messages' in result:
-                print("\n消息历史:")
+                logger.info("\n消息历史:")
                 for i, msg in enumerate(result['raw_messages']):
                     role = msg.get('role', '未知')
                     content = msg.get('content', '')
@@ -338,15 +339,15 @@ if __name__ == "__main__":
                     if content and len(content) > 200:
                         content = content[:200] + "..."
                         
-                    print(f"\n[{i+1}] {role}: {content}")
+                    logger.info(f"\n[{i+1}] {role}: {content}")
                     
                     # 如果是工具调用，显示工具名称
                     if msg.get('name'):
-                        print(f"   工具: {msg.get('name')}")
+                        logger.info(f"   工具: {msg.get('name')}")
             
         except Exception as e:
-            print(f"错误: {str(e)}")
-            print("详细错误信息:")
+            logger.error(f"错误: {str(e)}")
+            logger.error("详细错误信息:")
             traceback.print_exc()
     
     # 运行测试

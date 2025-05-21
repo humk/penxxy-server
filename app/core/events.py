@@ -4,8 +4,9 @@ from fastapi import FastAPI
 
 from app.db.session import engine
 from app.db.base import Base
+from app.utils.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("db")
 
 
 def startup_event_handler(app: FastAPI) -> Callable:
@@ -24,7 +25,7 @@ def startup_event_handler(app: FastAPI) -> Callable:
         except Exception as e:
             logger.error(f"数据库初始化失败: {str(e)}")
         
-        logger.info("应用程序启动完成")
+        get_logger("app").info("应用程序启动完成")
     
     return startup
 
@@ -34,6 +35,6 @@ def shutdown_event_handler(app: FastAPI) -> Callable:
     应用程序关闭事件处理
     """
     async def shutdown() -> None:
-        logger.info("应用程序关闭")
+        get_logger("app").info("应用程序关闭")
     
-    return shutdown 
+    return shutdown

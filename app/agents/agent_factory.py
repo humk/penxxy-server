@@ -1,6 +1,6 @@
 from typing import Dict, List, Type
 
-from app.agents.base.base_agent import BaseAgent
+from app.agents.base import BaseAgent
 from app.agents.paper_qa.paper_qa_agent import PaperQAAgent
 
 

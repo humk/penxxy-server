@@ -4,7 +4,10 @@ import xml.etree.ElementTree as ET
 import time
 
 from app.orchestrator.orchestrator import orchestrator
+from app.utils.logger import get_logger
 
+# 获取微信公众号服务的日志记录器
+logger = get_logger("wechat_mp")
 
 class WechatMPService:
     """
@@ -117,13 +120,8 @@ class WechatMPService:
             return self.generate_reply(message, "感谢您的消息，我们会尽快处理。")
         
         except Exception as e:
-            print(f"自动回复出错: {str(e)}")
-            # 发生错误时，返回一个友好的错误信息
-            try:
-                return self.generate_reply(message, "抱歉，系统暂时无法处理您的请求，请稍后再试。")
-            except:
-                # 如果无法生成回复，返回空字符串
-                return ""
+            logger.error(f"自动回复出错: {str(e)}")
+            return "很抱歉，处理您的消息时出现了错误，请稍后再试。"
     
     async def send_custom_message(self, openid: str, message_type: str, content: str) -> Dict[str, Any]:
         """

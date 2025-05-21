@@ -2,7 +2,12 @@ from typing import Dict, Any, List, Optional
 import arxiv
 import asyncio
 from datetime import datetime
+import re
 
+from app.utils.logger import get_logger
+
+# 获取ArXiv日志记录器
+logger = get_logger("arxiv")
 
 class ArxivTool:
     """
@@ -70,7 +75,7 @@ class ArxivTool:
             return papers
         
         except Exception as e:
-            print(f"ArXiv搜索失败: {str(e)}")
+            logger.error(f"ArXiv搜索失败: {str(e)}")
             return []
     
     async def get_paper_by_id(self, paper_id: str) -> Optional[Dict[str, Any]]:
@@ -78,12 +83,19 @@ class ArxivTool:
         通过ID获取指定论文
         
         Args:
-            paper_id: ArXiv论文ID
+            paper_id: ArXiv论文ID，可以是完整URL或纯ID
             
         Returns:
             论文信息，如果获取失败则返回None
         """
         try:
+            # 提取ID
+            if "arxiv.org" in paper_id:
+                # 从URL中提取ID
+                match = re.search(r'arxiv\.org\/(?:abs|pdf)\/([0-9v\.]+)', paper_id)
+                if match:
+                    paper_id = match.group(1)
+            
             # 创建异步执行的任务
             loop = asyncio.get_event_loop()
             client = arxiv.Client()
@@ -126,5 +138,5 @@ class ArxivTool:
             return paper_info
         
         except Exception as e:
-            print(f"通过ID获取ArXiv论文失败: {str(e)}")
+            logger.error(f"通过ID获取ArXiv论文失败: {str(e)}")
             return None 

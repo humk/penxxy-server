@@ -5,6 +5,10 @@ import os
 import httpx
 
 from app.core.config import settings
+from app.utils.logger import get_logger
+
+# 获取LLM日志记录器
+logger = get_logger("llm")
 
 
 class LLMTool:
@@ -48,7 +52,7 @@ class LLMTool:
             proxies = None
             if self.http_proxy:
                 proxies = self.http_proxy
-                print(f"使用OpenAI API代理: {self.http_proxy}")
+                logger.info(f"使用OpenAI API代理: {self.http_proxy}")
             
             # 创建httpx客户端与超时设置
             timeout = httpx.Timeout(360.0, connect=360.0)
@@ -75,7 +79,7 @@ class LLMTool:
             return response
         except Exception as e:
             # 记录错误并返回一个简单的错误响应
-            print(f"OpenAI API调用失败: {str(e)}")
+            logger.error(f"OpenAI API调用失败: {str(e)}")
             return {
                 "error": True,
                 "message": f"OpenAI API调用失败: {str(e)}"
@@ -120,5 +124,5 @@ class LLMTool:
             
             return {}
         except Exception as e:
-            print(f"从响应中提取JSON失败: {str(e)}")
+            logger.error(f"从响应中提取JSON失败: {str(e)}")
             return {} 
